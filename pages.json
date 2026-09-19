@@ -1,0 +1,111 @@
+{
+	"pages": [
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationBarTextStyle": "black",
+				"navigationBarBackgroundColor": "#F7FBFF",
+				"backgroundColor": "#F7FBFF"
+			}
+		},
+		{
+			"path": "pages/login/module",
+			"style": {
+				"navigationBarTitleText": "应用模块",
+				"navigationBarTextStyle": "black",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"backgroundColor": "#F5F7FA",
+				"homeButton": false,
+				"mp-weixin": {
+					"homeButton": false
+				}
+			}
+		},
+		{
+			"path": "pages/gf/home/index/index",
+			"style": {
+				"navigationBarTitleText": "首页"
+			}
+		},
+		{
+			"path": "pages/gf/home/detail/index",
+			"style": {
+				"navigationBarTitleText": "数据看板"
+			}
+		},
+		{
+			"path": "pages/gf/station/index/index",
+			"style": {
+				"navigationBarTitleText": "详情"
+			}
+		},
+		{
+			"path": "pages/gf/station/detail/index",
+			"style": {
+				"navigationBarTitleText": "数据看板"
+			}
+		},
+		{
+			"path": "pages/gf/station/device-detail/index",
+			"style": {
+				"navigationBarTitleText": "设备详情"
+			}
+		},
+		{
+			"path": "pages/gf/alarm/index/index",
+			"style": {
+				"navigationBarTitleText": "报警"
+			}
+		},
+		{
+			"path": "pages/gf/alarm/detail/index",
+			"style": {
+				"navigationBarTitleText": "报警详情"
+			}
+		},
+		{
+			"path": "pages/gf/mine/index/index",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},
+		{
+			"path": "pages/gf/mine/settings/index",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "筑电数字",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#F5F7FA",
+		"navigationStyle": "default"
+	},
+	"tabBar": {
+		"color": "#667085",
+		"selectedColor": "#1677ff",
+		"backgroundColor": "#FFFFFF",
+		"borderStyle": "black",
+		"list": [
+			{
+				"pagePath": "pages/gf/home/index/index",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/gf/station/index/index",
+				"text": "设备"
+			},
+			{
+				"pagePath": "pages/gf/alarm/index/index",
+				"text": "报警"
+			},
+			{
+				"pagePath": "pages/gf/mine/index/index",
+				"text": "我的"
+			}
+		]
+	}
+}
