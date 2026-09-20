@@ -1,58 +1,78 @@
 <template>
-	<view class="page">
-		<view class="summary-grid">
-			<DataCard
-				v-for="item in 状态数据"
-				:key="item.标题"
-				:class="{ 'summary-card--alarm': item.标题 === '有报警' }"
-				:title="item.标题"
-				:value="item.数值"
-				:unit="item.单位"
-				:type="item.类型"
-			/>
+	<view class="page home-page">
+		<view class="station-section">
+			<view class="home-section-title">电站概况</view>
+			<view class="station-grid">
+				<view v-for="item in 状态数据" :key="item.标题" class="station-item">
+					<DataCard
+						:class="{ 'summary-card--alarm': item.标题 === '有报警' }"
+						:title="item.标题"
+						:value="item.数值"
+						:unit="item.单位"
+						:type="item.类型"
+					/>
+				</view>
+			</view>
 		</view>
 
-		<view class="power-panel">
-			<view class="power-overview">
-				<view class="power-chart">
+		<view class="power-section">
+			<image class="power-section__background" src="/static/images/home-solar-blue.jpg" mode="aspectFill" />
+			<view class="power-section__shade"></view>
+			<view class="power-composition">
+				<view class="power-reading">
+					<view class="power-heading">
+						<text class="power-heading__label">当前发电功率</text>
+						<view class="power-heading__live">
+							<view class="power-heading__live-dot"></view>
+							<text>实时</text>
+						</view>
+					</view>
+					<view class="power-reading__amount">
+						<text class="power-reading__value">{{ 当前功率显示.数值 }}</text>
+						<text v-if="当前功率显示.单位" class="power-reading__unit">{{ 当前功率显示.单位 }}</text>
+					</view>
+					<view class="power-capacity">
+						<text class="power-capacity__label">总装机容量</text>
+						<view class="power-capacity__amount">
+							<text class="power-capacity__value">{{ 装机容量显示.数值 }}</text>
+							<text v-if="装机容量显示.单位" class="power-capacity__unit">{{ 装机容量显示.单位 }}</text>
+						</view>
+					</view>
+				</view>
+				<view class="power-dial">
 					<qiun-data-charts
-						class="power-chart__canvas"
+						class="power-dial__canvas"
 						type="arcbar"
 						canvas-id="homePowerArc"
+						background="rgba(0, 0, 0, 0)"
 						:canvas2d="true"
 						:animation="false"
 						:opts="发电功率图表配置"
 						:chartData="发电功率图表数据"
-						:disable-scroll="true"
+						:disable-scroll="false"
 						:in-scroll-view="true"
 						:page-scroll-top="页面滚动高度"
 					/>
-					<text class="power-chart__value">{{ 发电功率占比 }}</text>
-				</view>
-				<view class="power-stats">
-					<view class="power-stat">
-						<text class="power-stat__label">总装机容量</text>
-						<text class="power-stat__value">{{ 能源概览.总装机容量 }}</text>
-					</view>
-					<view class="power-stat">
-						<text class="power-stat__label">当前发电功率</text>
-						<text class="power-stat__value">{{ 能源概览.当前发电功率 }}</text>
+					<view class="power-dial__reading">
+						<view class="power-dial__number">
+							<text class="power-dial__value">{{ 发电功率占比数值 }}</text>
+							<text class="power-dial__unit">%</text>
+						</view>
+						<text class="power-dial__label">功率占比</text>
 					</view>
 				</view>
 			</view>
 		</view>
 
-		<view class="chart-panel">
-			<view class="panel-header">
-				<view>
-					<view class="section-title">发电量</view>
-				</view>
-				<view class="segmented">
+		<view class="generation-section">
+			<view class="generation-heading">
+				<view class="home-section-title">发电量</view>
+				<view class="period-tabs">
 					<view
 						v-for="dimension in 时间维度"
 						:key="dimension"
-						class="segmented__item"
-						:class="{ 'segmented__item--active': 当前维度 === dimension }"
+						class="period-tabs__item"
+						:class="{ 'period-tabs__item--active': 当前维度 === dimension }"
 						@click="切换时间维度(dimension)"
 					>
 						{{ dimension }}
@@ -60,34 +80,41 @@
 				</view>
 			</view>
 
-			<view class="bar-chart">
+			<!-- 横向滑动查看全部日期，同时保留点击提示和页面纵向滚动。 -->
+			<view class="generation-chart">
 				<qiun-data-charts
-					class="bar-chart__canvas"
+					class="generation-chart__canvas"
 					type="column"
 					canvas-id="homeTrendColumn"
+					background="#F6FAFF"
 					:canvas2d="true"
 					:animation="false"
 					:opts="发电趋势图表配置"
 					:chartData="发电趋势图表数据"
-					:disable-scroll="true"
+					:disable-scroll="false"
 					:in-scroll-view="true"
 					:page-scroll-top="页面滚动高度"
+					:ontouch="true"
 					tooltip-format="homePowerTooltip"
 				/>
 			</view>
 		</view>
 
-		<view class="metric-grid">
-			<view
-				v-for="metric in 发电指标"
-				:key="metric.标题"
-				class="metric-card"
-			>
-				<DataCard
-					:title="metric.标题"
-					:value="metric.数值"
-					:unit="metric.单位"
-				/>
+		<view class="statistics-section">
+			<view class="home-section-title">发电统计</view>
+			<view class="statistics-grid">
+				<view
+					v-for="metric in 发电指标"
+					:key="metric.标题"
+					class="statistics-item"
+					:class="{ 'statistics-item--total': metric.标题 === '累计发电量' }"
+				>
+					<DataCard
+						:title="metric.标题"
+						:value="metric.数值"
+						:unit="metric.单位"
+					/>
+				</view>
 			</view>
 		</view>
 
@@ -116,7 +143,9 @@ const 日期类型映射 = {
 
 // qiun-data-charts 圆环图配置，尺寸由外层容器固定，避免撑高顶部卡片。
 const 发电功率图表配置 = {
-	color: ['#16B978'],
+	// 复用图表更新，避免 Canvas 2D 初始化期间进入旧版 ctx.draw() 清理流程。
+	update: true,
+	color: ['#2DCAFF'],
 	padding: [0, 0, 0, 0],
 	animation: false,
 	dataLabel: false,
@@ -132,8 +161,11 @@ const 发电功率图表配置 = {
 	extra: {
 		arcbar: {
 			type: 'circle',
-			width: 12,
-			backgroundColor: '#E8F3FF',
+			width: 9,
+			backgroundColor: '#315A7C',
+			lineCap: 'round',
+			linearType: 'custom',
+			customColor: ['#16BFF5'],
 			startAngle: 1.5,
 			endAngle: 0.25,
 			gap: 2
@@ -143,6 +175,9 @@ const 发电功率图表配置 = {
 
 const 状态数据 = ref([])
 const 能源概览 = ref({})
+// 仅拆分展示用的数值与单位，原始字段仍用于接口更新和功率占比计算。
+const 当前功率显示 = computed(() => 拆分能源显示(能源概览.value.当前发电功率))
+const 装机容量显示 = computed(() => 拆分能源显示(能源概览.value.总装机容量))
 const 发电指标 = ref([])
 const 发电曲线 = ref([])
 const 页面滚动高度 = ref(0)
@@ -155,13 +190,17 @@ let 大屏请求序号 = 0
 let 发电曲线已响应更新 = false
 let 待同步滚动高度 = 0
 let 滚动同步定时器 = null
-const 发电趋势柱宽 = computed(() => 发电曲线.value.length > 20 ? 6 : 12)
-// qiun-data-charts 柱状图配置，日趋势点位较多时自动缩窄柱体。
+const 发电趋势每屏数量 = 8
+const 发电趋势可滚动 = computed(() => 发电曲线.value.length > 发电趋势每屏数量)
+// 每屏保留清晰的日期间距，其余日期通过横向滑动查看。
 const 发电趋势图表配置 = computed(() => ({
-	color: ['#12b76a'],
-	padding: [8, 4, 0, 4],
+	// 复用图表更新，避免 Canvas 2D 初始化期间进入旧版 ctx.draw() 清理流程。
+	update: true,
+	color: ['#2478F5'],
+	padding: [16, 10, 14, 10],
 	animation: false,
-	enableScroll: false,
+	enableScroll: 发电趋势可滚动.value,
+	scrollPosition: 'left',
 	dataLabel: false,
 	dataPointShape: false,
 	legend: {
@@ -169,10 +208,19 @@ const 发电趋势图表配置 = computed(() => ({
 	},
 	xAxis: {
 		disableGrid: true,
-		axisLine: false,
-		formatter: (项目, 索引) => 格式化趋势横轴标签(项目, 索引),
-		fontColor: '#98a2b3',
-		fontSize: 发电曲线.value.length > 20 ? 9 : 10
+		axisLine: true,
+		axisLineColor: '#DFEAF8',
+		itemCount: 发电趋势每屏数量,
+		labelCount: 0,
+		scrollShow: 发电趋势可滚动.value,
+		scrollAlign: 'left',
+		scrollColor: '#68ABFF',
+		scrollBackgroundColor: '#E4EDF9',
+		formatter: (项目) => 格式化趋势横轴标签(项目),
+		fontColor: '#7D90AC',
+		fontSize: 11,
+		lineHeight: 28,
+		marginTop: 6
 	},
 	yAxis: {
 		disabled: true,
@@ -184,11 +232,11 @@ const 发电趋势图表配置 = computed(() => ({
 		},
 		column: {
 			type: 'group',
-			width: 发电趋势柱宽.value,
+			width: 18,
 			linearType: 'custom',
-			customColor: ['#1677ff', '#12b76a'],
+			customColor: ['#72D4FF'],
 			barBorderCircle: true,
-			barBorderRadius: [8, 8, 0, 0],
+			// 圆顶半径跟随实际柱宽，兼容不同像素密度的屏幕。
 			categoryGap: 4
 		}
 	}
@@ -203,7 +251,6 @@ const 发电功率占比数值 = computed(() => {
 
 	return Math.min(100, Math.max(0, Math.round((当前发电功率 / 总装机容量) * 100)))
 })
-const 发电功率占比 = computed(() => `${发电功率占比数值.value}%`)
 const 发电功率图表数据 = computed(() => ({
 	series: [
 		{
@@ -223,16 +270,19 @@ const 发电趋势图表数据 = computed(() => ({
 	]
 }))
 
+function 拆分能源显示(值) {
+	const 文本 = String(值 ?? '')
+	const 匹配 = 文本.match(/^(.*?)([a-zA-Z]+)$/)
+
+	return 匹配 ? { 数值: 匹配[1].trim(), 单位: 匹配[2] } : { 数值: 文本, 单位: '' }
+}
+
 function 当前大屏请求是否有效(请求序号) {
 	return 页面有效 && 请求序号 === 大屏请求序号
 }
 
-function 格式化趋势横轴标签(时间, 索引) {
-	// 日、年维度横轴点位较密，从首项开始隔一个显示。
-	if (['日', '年'].includes(当前维度.value)) {
-		return 索引 % 2 === 0 ? String(时间) : ''
-	}
-
+function 格式化趋势横轴标签(时间) {
+	// 横向滚动已经提供足够间距，不再省略任何日期标签。
 	return String(时间)
 }
 
@@ -339,347 +389,532 @@ onUnload(() => {
 </script>
 
 <style>
-.page {
+/* 首页专用样式：白底蓝色信息层级，光伏实景作为功率卡片背景。 */
+.page.home-page {
 	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
-	padding: 28rpx 24rpx 24rpx;
-	padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
-	padding-bottom: calc(160rpx + constant(safe-area-inset-bottom));
-	background: #f5f8fc;
+	min-height: 100dvh;
+	padding: 32rpx 28rpx 24rpx;
+	background: #ffffff;
+	color: #18202d;
+	font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', Helvetica, Arial, sans-serif;
 	font-variant-numeric: tabular-nums;
 }
 
-/* 顶部状态统计卡片：弱化边框，用状态文字和小色点表达设备状态。 */
-.summary-grid {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 16rpx;
-}
-
-.summary-grid .data-card {
-	min-height: 128rpx;
-	padding: 24rpx 20rpx 22rpx;
-	border: 1rpx solid #eef2f7;
-	border-radius: 20rpx;
-	background: #ffffff;
-	box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.04);
-}
-
-.summary-grid .data-card__label {
-	display: flex;
-	align-items: center;
-	gap: 8rpx;
-	font-size: 22rpx;
+.home-page .home-section-title {
+	position: relative;
+	padding-left: 24rpx;
+	font-size: 32rpx;
 	font-weight: 600;
+	line-height: 44rpx;
+	color: #18202d;
+}
+
+.home-page .home-section-title::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 5rpx;
+	width: 8rpx;
+	height: 34rpx;
+	border-radius: 4rpx;
+	background: #1677ff;
+}
+
+/* 六项概况保持单行，以细分隔线和状态数字区分。 */
+.home-page .station-section {
+	padding-bottom: 38rpx;
+}
+
+.home-page .station-grid {
+	display: grid;
+	grid-template-columns: 1.12fr repeat(5, minmax(0, 1fr));
+	margin-top: 34rpx;
+}
+
+.home-page .station-item {
+	position: relative;
+	min-width: 0;
+	padding: 0 10rpx;
+}
+
+.home-page .station-item + .station-item::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 2rpx;
+	bottom: 5rpx;
+	width: 1rpx;
+	background: #e5e8ee;
+}
+
+.home-page .station-item:first-child {
+	padding-left: 12rpx;
+}
+
+.home-page .station-item:last-child {
+	padding-right: 0;
+}
+
+.home-page .station-grid .data-card {
+	box-sizing: border-box;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.home-page .station-grid .data-card__label {
+	font-size: 20rpx;
+	font-weight: 400;
+	line-height: 30rpx;
+	text-align: center;
+	white-space: nowrap;
+	color: #676e7d;
+}
+
+.home-page .station-grid .data-card__value {
+	justify-content: center;
+	align-items: baseline;
+	gap: 6rpx;
+	margin-top: 9rpx;
+	font-size: 44rpx;
+	font-weight: 600;
+	line-height: 1.1;
+	color: #1677ff;
+}
+
+.home-page .station-grid .data-card__unit {
+	font-size: 22rpx;
+	font-weight: 400;
+	color: #18202d;
+}
+
+.home-page .station-item:first-child .data-card__label {
+	font-size: 22rpx;
+	text-align: left;
+	color: #18202d;
+}
+
+.home-page .station-item:first-child .data-card__value {
+	justify-content: flex-start;
+	margin-top: 3rpx;
+	font-size: 62rpx;
+	line-height: 1;
+	letter-spacing: -2rpx;
+}
+
+.home-page .station-item:first-child .data-card__unit {
+	font-size: 26rpx;
 	letter-spacing: 0;
 }
 
-.summary-grid .data-card__label::before {
-	content: '';
+.home-page .station-grid .data-card--muted .data-card__value {
+	color: #858a96;
+}
+
+.home-page .station-grid .data-card--warning .data-card__value {
+	color: #f39800;
+}
+
+.home-page .station-grid .data-card--danger .data-card__value,
+.home-page .station-grid .summary-card--alarm .data-card__value {
+	color: #e83240;
+}
+
+/* 使用 image 节点加载本地资源，兼容小程序的静态图片路径。 */
+.home-page .power-section {
+	position: relative;
+	margin: 0 -14rpx;
+	padding: 44rpx 40rpx 38rpx;
+	min-height: 368rpx;
+	overflow: hidden;
+	border-radius: 24rpx;
+	background: #0b315b;
+}
+
+.home-page .power-section__background,
+.home-page .power-section__shade {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+}
+
+.home-page .power-section__shade {
+	background: linear-gradient(90deg, rgba(9, 49, 92, 0.76) 0%, rgba(9, 49, 92, 0.42) 48%, rgba(6, 35, 68, 0.08) 100%);
+}
+
+.home-page .power-composition {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: 18rpx;
+	min-width: 0;
+}
+
+.home-page .power-reading {
+	flex: 1;
+	min-width: 0;
+}
+
+.home-page .power-heading {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 16rpx;
+}
+
+.home-page .power-heading__label {
+	font-size: 26rpx;
+	font-weight: 600;
+	line-height: 36rpx;
+	color: #ffffff;
+}
+
+.home-page .power-heading__live {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
+	padding: 6rpx 14rpx;
+	border-radius: 30rpx;
+	background: rgba(190, 223, 255, 0.13);
+	font-size: 20rpx;
+	line-height: 26rpx;
+	color: #c0d6ed;
+}
+
+.home-page .power-heading__live-dot {
 	width: 10rpx;
 	height: 10rpx;
 	flex-shrink: 0;
 	border-radius: 50%;
-	background: #1677ff;
-	box-shadow: 0 0 0 6rpx rgba(22, 119, 255, 0.08);
+	background: #27c5ff;
 }
 
-.summary-grid .data-card__value {
-	margin-top: 16rpx;
-	font-size: 52rpx;
-	font-weight: 800;
-	line-height: 1;
-	color: #071b36;
-}
-
-.summary-grid .data-card__unit {
-	font-size: 22rpx;
-	font-weight: 600;
-	color: #5e728c;
-}
-
-.summary-grid .data-card--primary .data-card__label {
-	color: #1677ff;
-}
-
-.summary-grid .data-card--muted .data-card__label {
-	color: #475467;
-}
-
-.summary-grid .data-card--warning .data-card__label {
-	color: #ffb020;
-}
-
-.summary-grid .data-card--danger .data-card__label {
-	color: #ff5a5f;
-}
-
-.summary-grid .data-card--success .data-card__label {
-	color: #16b978;
-}
-
-.summary-grid .data-card--primary .data-card__label::before {
-	background: #1677ff;
-	box-shadow: 0 0 0 6rpx rgba(22, 119, 255, 0.08);
-}
-
-.summary-grid .data-card--muted .data-card__label::before {
-	background: #475467;
-	box-shadow: 0 0 0 6rpx rgba(71, 84, 103, 0.1);
-}
-
-.summary-grid .data-card--warning .data-card__label::before {
-	background: #ffb020;
-	box-shadow: 0 0 0 6rpx rgba(255, 176, 32, 0.1);
-}
-
-.summary-grid .data-card--danger .data-card__label::before {
-	background: #ff5a5f;
-	box-shadow: 0 0 0 6rpx rgba(255, 90, 95, 0.1);
-}
-
-.summary-grid .data-card--success .data-card__label::before {
-	background: #16b978;
-	box-shadow: 0 0 0 6rpx rgba(22, 185, 120, 0.1);
-}
-
-/* 指定状态卡颜色覆盖：避免相同 type 的卡片颜色串用。 */
-.summary-grid .summary-card--alarm .data-card__label,
-.summary-grid .summary-card--alarm .data-card__unit {
-	color: #b42318 !important;
-}
-
-.summary-grid .summary-card--alarm .data-card__label::before {
-	background: #b42318 !important;
-	box-shadow: 0 0 0 6rpx rgba(180, 35, 24, 0.1) !important;
-}
-
-/* 中部核心数据卡片：白底、弱阴影，突出装机容量和实时功率。 */
-.power-panel,
-.chart-panel {
-	margin-top: 24rpx;
-	padding: 32rpx;
-	border: 1rpx solid #eef2f7;
-	border-radius: 24rpx;
-	background: #ffffff;
-	box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
-}
-
-.power-panel {
-	padding: 40rpx 34rpx;
-	overflow: hidden;
-	box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.04);
-}
-
-/* 底部发电统计卡片：保持四宫格，累计发电量轻量高亮。 */
-.metric-grid {
+.home-page .power-reading__amount {
 	display: flex;
+	align-items: baseline;
 	flex-wrap: wrap;
-	margin: 28rpx -6rpx -10rpx;
+	gap: 10rpx;
+	margin-top: 14rpx;
 }
 
-.metric-card {
-	box-sizing: border-box;
-	width: 50%;
-	padding: 0 6rpx 16rpx;
-}
-
-.metric-card .data-card {
-	min-height: 140rpx;
-	padding: 32rpx 30rpx 28rpx;
-	border-color: transparent;
-	border-radius: 20rpx;
-	background: #ffffff;
-	box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.04);
-}
-
-.metric-card:nth-child(4) .data-card {
-	background: #f3f8ff;
-}
-
-.metric-card .data-card__label {
-	font-size: 26rpx;
-	font-weight: 600;
-	color: #63758f;
-}
-
-.metric-card .data-card__value {
-	margin-top: 16rpx;
-	font-size: 60rpx;
+.home-page .power-reading__value {
+	min-width: 0;
+	max-width: 100%;
+	font-size: 88rpx;
 	font-weight: 700;
-	color: #071b36;
-	line-height: 1.06;
+	line-height: 1.1;
+	letter-spacing: -3rpx;
+	color: #ffffff;
+	word-break: break-all;
 }
 
-.metric-card:nth-child(4) .data-card__value {
-	color: #1677ff;
+.home-page .power-reading__unit {
+	font-size: 32rpx;
+	font-weight: 400;
+	line-height: 1.2;
+	color: #f1f7ff;
 }
 
-.metric-card .data-card__unit {
+.home-page .power-capacity {
+	margin-top: 28rpx;
+	padding-top: 22rpx;
+	border-top: 1rpx solid rgba(211, 231, 252, 0.42);
+}
+
+.home-page .power-capacity__label {
+	display: block;
 	font-size: 22rpx;
-	font-weight: 500;
-	color: #7b8da4;
+	line-height: 30rpx;
+	color: #bed0e5;
 }
 
-.panel-header {
+.home-page .power-capacity__amount {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 10rpx;
+	margin-top: 6rpx;
+}
+
+.home-page .power-capacity__value {
+	max-width: 100%;
+	font-size: 46rpx;
+	font-weight: 600;
+	line-height: 1.15;
+	color: #ffffff;
+	word-break: break-all;
+}
+
+.home-page .power-capacity__unit {
+	font-size: 28rpx;
+	font-weight: 400;
+	line-height: 1.2;
+	color: #f1f7ff;
+}
+
+/* 深蓝圆盘遮住背景纹理，外缘、轨道与内芯形成参考图的层次。 */
+.home-page .power-dial {
+	position: relative;
+	flex-shrink: 0;
+	width: 224rpx;
+	height: 224rpx;
+	border-radius: 50%;
+	background: linear-gradient(145deg, rgba(9, 48, 83, 0.98), rgba(4, 33, 61, 0.98));
+	box-shadow: 0 8rpx 22rpx rgba(0, 22, 46, 0.24), inset 0 0 0 2rpx rgba(118, 184, 236, 0.06);
+}
+
+.home-page .power-dial::before {
+	content: '';
+	position: absolute;
+	left: 28rpx;
+	right: 28rpx;
+	top: 28rpx;
+	bottom: 28rpx;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 28%, #0b3a63 0%, #082e52 60%, #072746 100%);
+	box-shadow: inset 0 0 18rpx rgba(27, 111, 174, 0.16);
+	pointer-events: none;
+}
+
+.home-page .power-dial__canvas {
+	position: absolute;
+	left: 4rpx;
+	top: 4rpx;
+	z-index: 1;
+	width: 216rpx;
+	height: 216rpx;
+}
+
+.home-page .power-dial__reading {
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	padding-bottom: 4rpx;
+	pointer-events: none;
+}
+
+.home-page .power-dial__number {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 2rpx;
+	color: #ffffff;
+}
+
+.home-page .power-dial__value {
+	font-size: 44rpx;
+	font-weight: 500;
+	line-height: 1.1;
+	letter-spacing: 1rpx;
+	color: #ffffff;
+}
+
+.home-page .power-dial__unit {
+	font-size: 26rpx;
+	font-weight: 400;
+	line-height: 1;
+	color: #f1f7ff;
+}
+
+.home-page .power-dial__label {
+	margin-top: 10rpx;
+	font-size: 20rpx;
+	font-weight: 400;
+	line-height: 1.4;
+	color: #a6bfd5;
+}
+.home-page .generation-section {
+	padding-top: 44rpx;
+}
+
+.home-page .generation-heading {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 20rpx;
 }
 
-.panel-header > view:first-child {
-	min-width: 0;
+.home-page .period-tabs {
+	display: flex;
+	flex-shrink: 0;
+	padding: 1rpx;
+	border: 1rpx solid #e8ecf2;
+	border-radius: 50rpx;
+	background: #f5f6f8;
 }
 
-.section-title {
-	padding-left: 14rpx;
-	border-left: 6rpx solid #1677ff;
-	font-size: 32rpx;
-	font-weight: 800;
-	line-height: 1.15;
-	color: #101828;
-	word-break: break-word;
-}
-
-.section-subtitle {
-	margin-top: 8rpx;
-	font-size: 24rpx;
-	color: #667085;
-	word-break: break-word;
-}
-
-.power-overview {
+.home-page .period-tabs__item {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 72rpx;
-	min-height: 220rpx;
+	width: 76rpx;
+	min-height: 46rpx;
+	border-radius: 46rpx;
+	font-size: 24rpx;
+	font-weight: 400;
+	line-height: 1.4;
+	color: #5f6674;
 }
 
-.power-chart {
+.home-page .period-tabs__item--active {
+	background: #1677ff;
+	font-weight: 500;
+	color: #ffffff;
+	box-shadow: 0 3rpx 8rpx rgba(22, 119, 255, 0.12);
+}
+
+.home-page .period-tabs__item:active {
+	opacity: 0.8;
+}
+
+/* 淡蓝圆角底衬搭配渐变圆顶柱体，日期和滑动条保持清晰留白。 */
+.home-page .generation-chart {
 	position: relative;
-	flex-shrink: 0;
-	width: 180rpx;
-	height: 180rpx;
-	margin-left: 8rpx;
-	border-radius: 50%;
-	background: #f8fbff;
+	min-width: 0;
+	margin-top: 26rpx;
+	padding: 18rpx 12rpx 8rpx;
 	overflow: hidden;
+	border: 1rpx solid #e5effc;
+	border-radius: 28rpx;
+	background: #f6faff;
+	box-shadow: 0 10rpx 28rpx rgba(42, 104, 180, 0.06);
 }
 
-.power-chart__canvas {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 180rpx;
-	height: 180rpx;
-}
-
-.power-chart__value {
-	position: absolute;
-	left: 0;
-	top: 0;
-	z-index: 2;
-	width: 180rpx;
-	height: 180rpx;
-	font-size: 48rpx;
-	font-weight: 800;
-	line-height: 180rpx;
-	text-align: center;
-	color: #071b36;
-	pointer-events: none;
-}
-
-.power-stats {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 34rpx;
-}
-
-.power-stat {
-	min-width: 0;
-}
-
-.power-stat__label,
-.power-stat__value {
+.home-page .generation-chart__canvas {
 	display: block;
-	word-break: break-word;
+	width: 100%;
+	height: 336rpx;
 }
 
-.power-stat__label {
-	display: inline-flex;
-	align-items: center;
-	width: auto;
-	font-size: 26rpx;
+/* 两列统计，分隔线保留留白，累计读数使用主题蓝。 */
+.home-page .statistics-section {
+	margin-top: 44rpx;
+	margin-bottom: 30rpx;
+}
+
+.home-page .statistics-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	column-gap: 56rpx;
+	margin-top: 30rpx;
+}
+
+.home-page .statistics-item {
+	position: relative;
+	min-width: 0;
+	padding: 0 22rpx 24rpx;
+}
+
+.home-page .statistics-item:nth-child(n + 3) {
+	padding-top: 24rpx;
+	padding-bottom: 8rpx;
+	border-top: 1rpx solid #e7eaf0;
+}
+
+.home-page .statistics-item:nth-child(even)::before {
+	content: '';
+	position: absolute;
+	left: -28rpx;
+	top: 0;
+	bottom: 24rpx;
+	width: 1rpx;
+	background: #e7eaf0;
+}
+
+.home-page .statistics-item:nth-child(even):nth-child(n + 3)::before {
+	top: 24rpx;
+	bottom: 8rpx;
+}
+
+.home-page .statistics-grid .data-card {
+	box-sizing: border-box;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.home-page .statistics-grid .data-card__label {
+	font-size: 23rpx;
+	font-weight: 400;
+	line-height: 1.4;
+	color: #626b7b;
+}
+
+.home-page .statistics-grid .data-card__value {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 8rpx;
+	margin-top: 10rpx;
+	font-size: 50rpx;
 	font-weight: 600;
-	color: #60718a;
-}
-
-.power-stat:nth-child(2) .power-stat__label::after {
-	content: '实时';
-	margin-left: 12rpx;
-	padding: 4rpx 12rpx;
-	border-radius: 999rpx;
-	background: rgba(22, 185, 120, 0.1);
-	font-size: 20rpx;
-	font-weight: 700;
 	line-height: 1.2;
-	color: #16b978;
+	letter-spacing: -1.4rpx;
+	color: #18202d;
 }
 
-.power-stat__value {
-	margin-top: 14rpx;
-	font-size: 54rpx;
-	font-weight: 700;
-	line-height: 1.08;
-	color: #071b36;
+.home-page .statistics-grid .data-card__value-text {
+	max-width: 100%;
+	white-space: normal;
 	word-break: break-all;
 }
 
-.power-stat:first-child .power-stat__value {
-	font-size: 60rpx;
+.home-page .statistics-grid .data-card__unit {
+	font-size: 22rpx;
+	font-weight: 400;
+	line-height: 1.4;
+	letter-spacing: 0;
+	color: #626b7b;
 }
 
-.segmented {
-	display: flex;
-	flex-shrink: 0;
-	padding: 6rpx;
-	border: 1rpx solid #edf2f7;
-	border-radius: 14rpx;
-	background: #f3f6fa;
-}
-
-.segmented__item {
-	min-width: 56rpx;
-	height: 48rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 10rpx;
-	font-size: 24rpx;
-	font-weight: 700;
-	color: #60718a;
-}
-
-.segmented__item--active {
-	background: #ffffff;
+.home-page .statistics-item--total .data-card__value {
 	color: #1677ff;
-	box-shadow: 0 6rpx 14rpx rgba(0, 0, 0, 0.06);
 }
 
-.bar-chart {
-	position: relative;
-	height: 276rpx;
-	margin-top: 34rpx;
-	overflow: hidden;
-}
+@media (max-width: 360px) {
+	.home-page .power-section {
+		padding-right: 32rpx;
+		padding-left: 32rpx;
+	}
 
-.bar-chart__canvas {
-	width: 100%;
-	height: 276rpx;
-}
+	.home-page .power-composition {
+		gap: 14rpx;
+	}
 
+	.home-page .power-reading__value {
+		font-size: 80rpx;
+	}
+
+	.home-page .statistics-item {
+		padding-right: 14rpx;
+		padding-left: 14rpx;
+	}
+
+	.home-page .statistics-grid .data-card__value {
+		font-size: 46rpx;
+	}
+}
 </style>

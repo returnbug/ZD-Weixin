@@ -27,6 +27,7 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import StatusTag from '@/components/status-tag/status-tag.vue'
 import { 报警接口 } from '@/api/index.js'
+import { 解析路由参数 } from '@/utils/navigation.js'
 
 const 报警编号 = ref('')
 const 报警信息 = ref({})
@@ -43,7 +44,8 @@ const 详情字段 = computed(() => [
 ])
 
 function 初始化页面(参数 = {}) {
-	报警编号.value = 参数.报警编号 || ''
+	const 路由参数 = 解析路由参数(参数)
+	报警编号.value = 路由参数.alarmId || 路由参数.报警编号 || ''
 	const 缓存报警信息 = 报警接口.读取报警详情缓存(报警编号.value)
 	const 是否存在缓存 = 缓存报警信息 && typeof 缓存报警信息 === 'object' && !Array.isArray(缓存报警信息) && Object.keys(缓存报警信息).length
 
@@ -63,9 +65,14 @@ onLoad((参数) => {
 
 <style>
 .page {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
 	padding: 24rpx;
 	padding-bottom: 48rpx;
+	padding-bottom: calc(48rpx + constant(safe-area-inset-bottom));
+	padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 	background: #f5f7fa;
 }
 
@@ -123,6 +130,8 @@ onLoad((参数) => {
 
 .detail-item text:first-child {
 	flex-shrink: 0;
+	max-width: 45%;
+	word-break: break-word;
 	color: #667085;
 }
 

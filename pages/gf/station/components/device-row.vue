@@ -38,6 +38,8 @@ defineProps({
 
 .device-row__status-list {
 	display: flex;
+	flex-wrap: wrap;
+	max-width: 100%;
 	align-items: center;
 	gap: 10rpx;
 	flex-shrink: 0;
@@ -45,6 +47,7 @@ defineProps({
 
 .device-row__summary {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 18rpx;

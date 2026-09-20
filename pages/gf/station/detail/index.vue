@@ -104,7 +104,7 @@
 							:animation="false"
 							:opts="发电效率圆环图表配置"
 							:chartData="发电效率圆环图表数据"
-							:disable-scroll="true"
+							:disable-scroll="false"
 							:in-scroll-view="true"
 						/>
 						<text class="power-ring-chart__value">{{ 发电概览.发电效率 }}</text>
@@ -216,7 +216,7 @@
 					:animation="false"
 					:opts="发电曲线图表配置"
 					:chartData="发电曲线图表数据"
-					:disable-scroll="true"
+					:disable-scroll="false"
 					:in-scroll-view="true"
 				/>
 			</view>
@@ -276,6 +276,7 @@
 import { computed, ref } from 'vue'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
 import { 光伏电站接口 } from '@/api/index.js'
+import { 解析路由参数 } from '@/utils/navigation.js'
 
 const 发电统计维度列表 = ['日', '月', '年', '总']
 const 能量页签列表 = ['能量流向', '发电', '用电', '电网']
@@ -564,7 +565,8 @@ const 节能减排列表 = computed(() => {
 const 消纳率分析列表 = computed(() => 创建消纳率分析列表(看板数据.value.电能数据, 光伏电站看板原始数据.value))
 
 function 初始化页面(参数 = {}) {
-	电站编号.value = 参数.电站编号 || ''
+	const 路由参数 = 解析路由参数(参数)
+	电站编号.value = 路由参数.stationId || 路由参数.电站编号 || ''
 	电站信息.value = {}
 	光伏电站看板原始数据.value = {}
 	
@@ -930,9 +932,14 @@ onUnload(() => {
 
 <style>
 .page {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
 	padding: 24rpx;
 	padding-bottom: 48rpx;
+	padding-bottom: calc(48rpx + constant(safe-area-inset-bottom));
+	padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 	background:
 		linear-gradient(180deg, #f8fbff 0%, #f4f7fb 42%, #eef3f8 100%);
 }
@@ -1139,7 +1146,8 @@ onUnload(() => {
 
 .flow-copy--load {
 	margin-left: 0;
-	flex: 0 0 auto;
+	flex: 1;
+	min-width: 0;
 }
 
 .flow-copy__main {
@@ -1165,7 +1173,7 @@ onUnload(() => {
 	line-height: 1.25;
 	color: #7b8794;
 	white-space: normal;
-	word-break: keep-all;
+	word-break: break-all;
 }
 
 .flow-line-group {
@@ -1187,6 +1195,7 @@ onUnload(() => {
 }
 
 .flow-line-label {
+	flex-wrap: wrap;
 	position: absolute;
 	left: -12rpx;
 	right: -12rpx;
@@ -1214,7 +1223,10 @@ onUnload(() => {
 }
 
 .flow-line-label text {
-	white-space: nowrap;
+	min-width: 0;
+	max-width: 100%;
+	white-space: normal;
+	word-break: break-all;
 }
 
 .flow-line-group--right .flow-line-label--top {
@@ -1414,10 +1426,13 @@ onUnload(() => {
 
 .power-summary__line text:nth-child(2),
 .single-power-summary__text text:nth-child(2) {
+	min-width: 0;
+	max-width: 100%;
 	font-size: 44rpx;
 	font-weight: 800;
 	color: #101828;
-	white-space: nowrap;
+	white-space: normal;
+	word-break: break-all;
 }
 
 .power-summary__line text:last-child {
@@ -1431,6 +1446,8 @@ onUnload(() => {
 
 .single-power-summary__text {
 	display: flex;
+	flex-wrap: wrap;
+	flex: 1;
 	align-items: baseline;
 	gap: 14rpx;
 	min-width: 0;
@@ -1466,13 +1483,14 @@ onUnload(() => {
 }
 
 .energy-stat-card__value {
+	max-width: 100%;
 	margin-top: 26rpx;
 	font-size: 32rpx;
 	font-weight: 800;
 	line-height: 1.1;
 	color: #101828;
-	white-space: nowrap;
-	word-break: keep-all;
+	white-space: normal;
+	word-break: break-all;
 }
 
 .energy-stat-card__unit {
@@ -1694,6 +1712,7 @@ onUnload(() => {
 
 .absorption-panel__head {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 20rpx;
@@ -1708,7 +1727,8 @@ onUnload(() => {
 }
 
 .absorption-panel__value {
-	flex-shrink: 0;
+	min-width: 0;
+	max-width: 100%;
 	font-size: 34rpx;
 	font-weight: 800;
 	line-height: 1.2;
@@ -1754,7 +1774,9 @@ onUnload(() => {
 }
 
 .absorption-card {
+	box-sizing: border-box;
 	display: flex;
+	flex-wrap: wrap;
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 18rpx;
@@ -1799,7 +1821,9 @@ onUnload(() => {
 }
 
 .absorption-card__percent {
-	flex-shrink: 0;
+	min-width: 0;
+	max-width: 100%;
+	word-break: break-all;
 	font-size: 30rpx;
 	font-weight: 800;
 	line-height: 1.2;

@@ -269,9 +269,13 @@ onUnload(() => {
 
 .page {
 	position: relative;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
 	box-sizing: border-box;
-	padding: 44rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
+	padding: 44rpx 32rpx 40rpx;
+	padding-bottom: calc(40rpx + constant(safe-area-inset-bottom));
+	padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 	overflow: hidden;
 	background: linear-gradient(180deg, #f7fbff 0%, #edf7ff 100%);
 }
@@ -409,7 +413,9 @@ onUnload(() => {
 	justify-content: flex-start;
 	flex: 0 1 calc(50% - 12rpx);
 	width: calc(50% - 12rpx);
-	height: 292rpx;
+	min-width: 0;
+	/* 名称换行时允许卡片增高，避免“进入”按钮被固定高度裁掉。 */
+	min-height: 292rpx;
 	box-sizing: border-box;
 	padding: 30rpx 28rpx 28rpx;
 	overflow: hidden;

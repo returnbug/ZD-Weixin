@@ -137,7 +137,8 @@ function 打开入口(入口) {
 }
 
 function 返回平台() {
-	重启页面('/pages/login/index')
+	// 直接进入应用模块页，由该页面统一检查登录态，避免经过登录页中转。
+	重启页面('/pages/login/module')
 }
 
 function 确认退出登录() {
@@ -179,9 +180,12 @@ onShow(() => {
 
 <style>
 .page {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
-	padding: 24rpx;
-	padding-bottom: 160rpx;
+	/* AppTabbar 已预留底栏和安全区高度。 */
+	padding: 24rpx 24rpx 48rpx;
 	background: #f5f7fa;
 }
 
@@ -195,6 +199,7 @@ onShow(() => {
 }
 
 .profile-card__avatar {
+	flex-shrink: 0;
 	width: 96rpx;
 	height: 96rpx;
 	border-radius: 48rpx;
@@ -245,6 +250,7 @@ onShow(() => {
 }
 
 .profile-card__row text:first-child {
+	flex-shrink: 0;
 	opacity: 0.78;
 }
 

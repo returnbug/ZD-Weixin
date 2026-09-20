@@ -2,7 +2,7 @@ const 基础地址 = 'https://gg.thezd.cn'
 // const 基础地址 = 'http://47.116.199.141:8000/'
 const 新能源基础地址 = 'https://gf.thezd.cn'
 // const 新能源基础地址 = 'http://47.116.199.141:8003/'
-const 请求超时时间 = 150000
+const 请求超时时间 = 250000
 const 登录有效时间 = 7 * 24 * 60 * 60 * 1000
 const 默认字段名列表 = ['名称', '字段名称', '列名', '字段']
 
@@ -52,7 +52,7 @@ function 转为文本(值, 配置 = {}) {
 }
 
 function 解析Json(值, 默认值) {
-	// 旧接口可能把数组/对象包成 JSON 字符串返回，统一在这里兼容解析。
+	// sb读取的表单、基本信息和表格列表包含 JSON 字符串，统一解析并保留空值兜底。
 	if (值 === undefined || 值 === null || 值 === '') {
 		return 默认值
 	}
@@ -157,6 +157,59 @@ function 解析下拉对象(响应数据) {
 	const 下拉 = 读取对象字段(响应数据, ['下拉'])
 
 	return 是否普通对象(下拉) ? 下拉 : {}
+}
+
+function 解析下拉列表(列表) {
+	// 其他下拉的设备类型、恢复状态为文本数组；保留已有对象选项的兼容读取。
+	return 读取数组(列表).map((项) => {
+		const 值 = 是否普通对象(项)
+			? 读取对象字段(项, ['名称', 'name', 'label', '值', 'value', 'ID', 'id'])
+			: 项
+		return 转为文本(值)
+	}).filter(Boolean)
+}
+
+function 创建参数缓存键(参数 = {}) {
+	if (!是否普通对象(参数)) {
+		return JSON.stringify(参数 || {})
+	}
+
+	// 接口参数是扁平对象，固定键顺序即可复用同参数请求。
+	const 排序参数 = {}
+	Object.keys(参数).sort().forEach((键) => {
+		排序参数[键] = 参数[键]
+	})
+	return JSON.stringify(排序参数)
+}
+
+function 清空缓存对象(缓存对象) {
+	Object.keys(缓存对象).forEach((键) => {
+		delete 缓存对象[键]
+	})
+}
+
+function 读取有效内存缓存(缓存对象, 键, 有效时间) {
+	const 缓存 = 缓存对象[键]
+	if (缓存 && Date.now() - 缓存.time <= 有效时间) {
+		return 缓存.data
+	}
+
+	delete 缓存对象[键]
+	return null
+}
+
+function 复用在途请求(缓存对象, 键, 发送请求) {
+	if (!缓存对象[键]) {
+		// 只复用进行中的 Promise，成功或失败后都释放；结果是否缓存由业务模块决定。
+		const 请求 = 发送请求().finally(() => {
+			// 会话切换后同键可能已有新请求，旧请求不能删除它。
+			if (缓存对象[键] === 请求) {
+				delete 缓存对象[键]
+			}
+		})
+		缓存对象[键] = 请求
+	}
+	return 缓存对象[键]
 }
 
 function 读取字段定义名称(字段, 字段名列表 = []) {
@@ -368,6 +421,7 @@ function 统一请求({ url = '', method = 'GET', data = {}, header = {}, baseUR
 	}
 
 	if (请求方法 === 'POST' && !请求头['content-type'] && !请求头['Content-Type']) {
+		// YZ 使用 request.POST 读取中文参数，继续提交表单，不能改为 JSON 请求体。
 		const legacy数据 = 创建LegacyMultipart数据(data)
 		请求头['content-type'] = legacy数据.contentType
 		请求数据 = legacy数据.body
@@ -384,15 +438,7 @@ function 统一请求({ url = '', method = 'GET', data = {}, header = {}, baseUR
 				const 响应数据 = 响应.data
 				const 状态码 = 响应.statusCode
 
-				if (状态码 < 200 || 状态码 >= 300) {
-					const 提示 = 读取后端错误信息(响应数据)
-
-					显示请求错误(提示)
-					reject(new Error(提示))
-					return
-				}
-
-				if (!判断业务请求成功(响应数据)) {
+				if (状态码 < 200 || 状态码 >= 300 || !判断业务请求成功(响应数据)) {
 					const 提示 = 读取后端错误信息(响应数据)
 
 					显示请求错误(提示)
@@ -463,6 +509,11 @@ export {
 	读取可见区域ID,
 	新能源请求,
 	解析下拉对象,
+	解析下拉列表,
+	创建参数缓存键,
+	清空缓存对象,
+	读取有效内存缓存,
+	复用在途请求,
 	解析字段列表,
 	读取响应列表数据,
 	二维行转对象,

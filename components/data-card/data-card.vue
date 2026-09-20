@@ -36,6 +36,9 @@ defineProps({
 
 <style>
 .data-card {
+	/* 不依赖页面标签选择器，保证小程序组件的内边距包含在卡片宽度内。 */
+	box-sizing: border-box;
+	width: 100%;
 	min-width: 0;
 	padding: 24rpx;
 	border-radius: 16rpx;
@@ -72,6 +75,8 @@ defineProps({
 
 .data-card__value-text {
 	min-width: 0;
+	max-width: 100%;
+	word-break: break-all;
 }
 
 .data-card__desc {

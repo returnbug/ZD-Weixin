@@ -226,17 +226,13 @@ async function 查询设备列表(是否重置 = true) {
 	设备加载中.value = true
 
 	try {
+		// 系统类型、设备模版和状态筛选沿用 API 层相同的默认值。
 		const 列表结果 = await 设备接口.获取设备列表({
 			显条: 设备每页显条,
 			当页: 查询页码,
 			区域类型: 设备区域类型.value,
-			系统类型: '全部类型',
-			设备类型: 请求设备类型,
-			设备模版: '全部模版',
-			通讯状态: '全部状态',
-			报警状态: '全部状态'
+			设备类型: 请求设备类型
 		})
-		// console.log('设备列表结果', 列表结果)
 
 		if (!页面有效 || 当前请求序号 !== 设备列表请求序号 || 请求设备类型 !== 当前设备类型.value) {
 			return
@@ -348,18 +344,19 @@ function 加载更多设备() {
 }
 
 function 打开电站详情(电站) {
+	// 路由统一使用英文参数名，避免模拟器和真机对中文键名的解码差异。
 	跳转页面('/pages/gf/station/detail/index', {
-		电站编号: 电站.id,
+		stationId: 电站.id,
 	})
 }
 
 function 打开设备详情(设备) {
 	跳转页面('/pages/gf/station/device-detail/index', {
-		设备ID: 设备.ID || '',
-		设备SN: String(设备.类型 || '').includes('逆变器')
+		deviceId: 设备.ID || '',
+		deviceSn: String(设备.类型 || '').includes('逆变器')
 			? (设备.sn || '')
 			: '',
-		设备类型: 设备.类型
+		deviceType: 设备.类型
 	})
 }
 
@@ -396,9 +393,12 @@ onUnload(() => {
 
 <style>
 .page {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
-	padding: 24rpx;
-	padding-bottom: 160rpx;
+	/* AppTabbar 已预留底栏和安全区高度。 */
+	padding: 24rpx 24rpx 48rpx;
 	background: #f5f7fa;
 }
 

@@ -16,19 +16,33 @@
 		</view>
 
 		<view v-if="是否显示筛选" class="filter-panel">
-			<view class="filter-panel__title">筛选条件</view>
+			<view class="filter-panel__title">
+				<uni-icons type="tune" size="40rpx" color="#1677ff"></uni-icons>
+				<text>筛选条件</text>
+			</view>
 			<view class="filter-panel__form">
 				<view class="filter-field">
 					<text class="filter-field__label">设备类型</text>
 					<picker mode="selector" :range="报警下拉.设备类型" :value="当前设备类型索引" @change="选择设备类型">
-						<view class="filter-field__value">{{ 筛选条件.设备类型 || '请选择设备类型' }}</view>
+						<view class="filter-field__control">
+							<text class="filter-field__value">{{ 筛选条件.设备类型 || '请选择设备类型' }}</text>
+							<uni-icons class="filter-field__icon" type="down" size="28rpx" color="#1677ff"></uni-icons>
+						</view>
 					</picker>
 				</view>
 				<view class="filter-field">
 					<text class="filter-field__label">发生时间</text>
-					<picker mode="date" fields="day" :value="筛选条件.开始时间" @change="选择开始时间">
-						<view class="filter-field__value">{{ 筛选条件.开始时间 || '请选择发生时间' }}</view>
-					</picker>
+					<view class="filter-field__control">
+						<picker class="filter-field__date-picker" mode="date" fields="day" :value="筛选条件.开始时间" @change="选择开始时间">
+							<view class="filter-field__date-value">
+								<text class="filter-field__value" :class="{ 'filter-field__value--placeholder': !筛选条件.开始时间 }">{{ 筛选条件.开始时间 || '请选择发生时间' }}</text>
+								<uni-icons v-if="!筛选条件.开始时间" class="filter-field__icon" type="calendar" size="32rpx" color="#1677ff"></uni-icons>
+							</view>
+						</picker>
+						<button v-if="筛选条件.开始时间" class="filter-field__clear" aria-label="清除发生时间" @click.stop="清除发生时间">
+							<uni-icons type="clear" size="32rpx" color="#7894bb"></uni-icons>
+						</button>
+					</view>
 				</view>
 			</view>
 		</view>
@@ -194,7 +208,7 @@ async function 查询报警列表(是否重置 = true) {
 		return
 	}
 
-	const 查询页码 = 是否重置 ? 1 : 当前页.value
+	let 查询页码 = 是否重置 ? 1 : 当前页.value
 	const 当前请求序号 = 报警列表请求序号 + 1
 
 	报警列表请求序号 = 当前请求序号
@@ -208,23 +222,41 @@ async function 查询报警列表(是否重置 = true) {
 	加载中.value = true
 
 	try {
-		const 查询恢复状态 = 读取状态恢复参数()
-		const 本页报警数据 = await 报警接口.获取报警列表({
+		const 查询日期 = 筛选条件.value.开始时间
+		const 查询参数 = {
 			显条: 每页显条,
-			当页: 查询页码,
 			设备类型: 筛选条件.value.设备类型,
-			恢复状态: 查询恢复状态,
-			区域类型: 筛选条件.value.区域类型
-		})
-
-		if (!页面有效 || 当前请求序号 !== 报警列表请求序号) {
-			return
+			恢复状态: 读取状态恢复参数(),
+			区域类型: 筛选条件.value.区域类型,
+			// 后端“条件”会搜索开始时间，先限定候选数据，再分页。
+			条件: 查询日期
 		}
+		const 本次报警数据 = []
+		let 本次还有更多 = true
 
-		// 报警接口已完成字段映射和空值标准化，页面直接合并标准对象。
-		报警数据.value = 是否重置 ? 本页报警数据 : [...报警数据.value, ...本页报警数据]
-		当前页.value = 查询页码 + 1
-		是否还有更多.value = 本页报警数据.length >= 每页显条
+		do {
+			const 本页报警数据 = await 报警接口.获取报警列表({
+				...查询参数,
+				当页: 查询页码
+			})
+
+			if (!页面有效 || 当前请求序号 !== 报警列表请求序号) {
+				return
+			}
+
+			// “条件”也搜索日志内容；只保留发生日期相符的记录，避免文案里的日期误命中。
+			const 本页匹配数据 = 查询日期
+				? 本页报警数据.filter((报警) => 报警.发生日期 === 查询日期)
+				: 本页报警数据
+			本次报警数据.push(...本页匹配数据)
+			本次还有更多 = 本页报警数据.length >= 每页显条
+			查询页码 += 1
+			// 候选页可能全部误命中，继续补足一页有效记录或查到末页，不能提前显示“暂无报警”。
+		} while (查询日期 && 本次还有更多 && 本次报警数据.length < 每页显条)
+
+		报警数据.value = 是否重置 ? 本次报警数据 : [...报警数据.value, ...本次报警数据]
+		当前页.value = 查询页码
+		是否还有更多.value = 本次还有更多
 	} catch (错误) {
 		const 当前请求仍然有效 = 页面有效 && 当前请求序号 === 报警列表请求序号
 
@@ -261,13 +293,29 @@ function 选择设备类型(事件) {
 }
 
 function 选择开始时间(事件) {
-	筛选条件.value.开始时间 = 事件.detail.value || ''
+	const 日期 = 事件.detail.value || ''
+
+	if (日期 === 筛选条件.value.开始时间) {
+		return
+	}
+
+	筛选条件.value.开始时间 = 日期
+	查询报警列表()
+}
+
+function 清除发生时间() {
+	if (!筛选条件.value.开始时间) {
+		return
+	}
+
+	筛选条件.value.开始时间 = ''
+	查询报警列表()
 }
 
 function 查看报警详情(报警) {
 	报警接口.写入报警详情缓存(报警)
 	跳转页面('/pages/gf/alarm/detail/index', {
-		报警编号: 报警.id
+		alarmId: 报警.id
 	})
 }
 
@@ -288,12 +336,13 @@ onUnload(() => {
 
 <style>
 .page {
-	min-height: 100vh;
-	padding: 24rpx;
-	padding-bottom: calc(170rpx + constant(safe-area-inset-bottom));
-	padding-bottom: calc(170rpx + env(safe-area-inset-bottom));
-	background: #f5f7fa;
 	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	min-height: 100vh;
+	/* AppTabbar 已预留底栏和安全区高度。 */
+	padding: 24rpx 24rpx 58rpx;
+	background: #f5f7fa;
 }
 
 .filter-bar {
@@ -343,82 +392,111 @@ onUnload(() => {
 
 .filter-panel {
 	margin-top: 16rpx;
-	padding: 0 24rpx;
-	border-radius: 8rpx;
+	padding: 24rpx;
+	border-radius: 18rpx;
 	background: #ffffff;
-	border: 1rpx solid #d0d5dd;
+	border: 1rpx solid #e2ebf7;
+	box-shadow: 0 6rpx 20rpx rgba(22, 119, 255, 0.035);
 }
 
 .filter-panel__title {
-	position: relative;
-	padding: 22rpx 0 18rpx 18rpx;
-	font-size: 26rpx;
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	font-size: 28rpx;
 	font-weight: 700;
+	line-height: 40rpx;
 	color: #101828;
-}
-
-.filter-panel__title::before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 24rpx;
-	width: 4rpx;
-	height: 24rpx;
-	background: #e4002b;
 }
 
 .filter-panel__form {
 	display: flex;
-	flex-direction: column;
-	border-top: 1rpx solid #e4e7ec;
-}
-
-.filter-field {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
 	gap: 24rpx;
-	min-width: 0;
-	min-height: 88rpx;
-	border-bottom: 1rpx solid #e4e7ec;
+	margin-top: 32rpx;
 }
 
-.filter-field:last-child {
-	border-bottom: 0;
-}
-
-.filter-field__label {
-	flex-shrink: 0;
-	font-size: 24rpx;
-	font-weight: 600;
-	color: #475467;
-}
-
-.filter-field picker {
+.filter-panel .filter-field {
 	flex: 1;
 	min-width: 0;
 }
 
-.filter-field__value {
-	position: relative;
-	padding: 22rpx 30rpx 22rpx 0;
+.filter-panel .filter-field__label {
+	display: block;
+	margin-bottom: 10rpx;
+	font-size: 24rpx;
+	font-weight: 600;
+	line-height: 1.4;
+	color: #667085;
+}
+
+.filter-panel .filter-field picker {
+	display: block;
+	width: 100%;
+	min-width: 0;
+}
+
+.filter-panel .filter-field__control {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	min-height: 82rpx;
+	padding: 18rpx 22rpx;
+	border-radius: 14rpx;
+	border: 1rpx solid #dfebff;
+	background: #f3f7ff;
+}
+
+.filter-panel .filter-field__value {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
 	font-size: 24rpx;
 	line-height: 1.5;
 	color: #101828;
-	text-align: right;
-	word-break: break-word;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
-.filter-field__value::after {
-	content: '';
-	position: absolute;
-	right: 4rpx;
-	top: 50%;
-	width: 10rpx;
-	height: 10rpx;
-	border-top: 2rpx solid #98a2b3;
-	border-right: 2rpx solid #98a2b3;
-	transform: translateY(-50%) rotate(45deg);
+.filter-panel .filter-field__value--placeholder {
+	color: #52658e;
+}
+
+.filter-panel .filter-field__icon {
+	flex-shrink: 0;
+	line-height: 1;
+}
+
+.filter-panel .filter-field .filter-field__date-picker {
+	flex: 1;
+	width: auto;
+}
+
+.filter-panel .filter-field__date-value {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	min-width: 0;
+}
+
+.filter-panel .filter-field__clear {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 56rpx;
+	height: 56rpx;
+	margin: -10rpx -10rpx -10rpx 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	line-height: 1;
+}
+
+.filter-panel .filter-field__clear::after {
+	border: 0;
 }
 
 .alarm-list {

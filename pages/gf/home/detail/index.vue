@@ -106,9 +106,14 @@ onLoad(() => {
 
 <style>
 .page {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
 	padding: 24rpx;
 	padding-bottom: 48rpx;
+	padding-bottom: calc(48rpx + constant(safe-area-inset-bottom));
+	padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 	background: #f5f7fa;
 }
 

@@ -78,6 +78,9 @@ function 标记图片成功() {
 
 <style>
 .station-card {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	display: flex;
 	align-items: center;
 	gap: 18rpx;
@@ -183,6 +186,7 @@ function 标记图片成功() {
 
 .station-card__metric-value {
 	display: block;
+	word-break: break-word;
 	font-size: 22rpx;
 	color: #667085;
 }

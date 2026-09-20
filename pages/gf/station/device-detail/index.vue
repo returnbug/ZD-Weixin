@@ -33,27 +33,30 @@
 
 		<view v-for="tableItem in 实时数据表格列表" :key="tableItem._key" class="section">
 			<view v-if="tableItem.名称" class="section__title">{{ tableItem.名称 }}</view>
-			<view class="table">
-				<view
-					v-if="tableItem.字段列表.length"
-					class="table__row table__row--head"
-					:style="读取表格列样式(tableItem.字段列表.length)"
-				>
-					<text v-for="(fieldName, fieldIndex) in tableItem.字段列表" :key="fieldIndex">
-						{{ fieldName }}
-					</text>
+			<!-- 多列数据只在表格内横向滚动，页面仍保持当前屏幕宽度。 -->
+			<scroll-view class="table-scroll" scroll-x>
+				<view class="table" :style="读取表格宽度(tableItem.字段列表.length, tableItem.数据列表)">
+					<view
+						v-if="tableItem.字段列表.length"
+						class="table__row table__row--head"
+						:style="读取表格列样式(tableItem.字段列表.length)"
+					>
+						<text v-for="(fieldName, fieldIndex) in tableItem.字段列表" :key="fieldIndex">
+							{{ fieldName }}
+						</text>
+					</view>
+					<view
+						v-for="(rowData, rowIndex) in tableItem.数据列表"
+						:key="rowIndex"
+						class="table__row"
+						:style="读取表格列样式(tableItem.字段列表.length || rowData.length)"
+					>
+						<text v-for="(cell, cellIndex) in rowData" :key="cellIndex">
+							{{ cell }}
+						</text>
+					</view>
 				</view>
-				<view
-					v-for="(rowData, rowIndex) in tableItem.数据列表"
-					:key="rowIndex"
-					class="table__row"
-					:style="读取表格列样式(tableItem.字段列表.length || rowData.length)"
-				>
-					<text v-for="(cell, cellIndex) in rowData" :key="cellIndex">
-						{{ cell }}
-					</text>
-				</view>
-			</view>
+			</scroll-view>
 		</view>
 
 		<view class="section">
@@ -72,10 +75,10 @@
 				</view>
 			</view>
 
-			<scroll-view v-if="筛选报警列表.length" class="alarm-table-scroll" scroll-x>
+			<scroll-view v-if="筛选报警列表.length" class="table-scroll" scroll-x>
 				<view
 					class="table alarm-table"
-					:style="读取报警表格宽度(报警表格字段列表.length)"
+					:style="读取表格宽度(报警表格字段列表.length)"
 				>
 					<view
 						class="table__row table__row--head"
@@ -108,6 +111,7 @@ import { onLoad, onUnload } from '@dcloudio/uni-app'
 import StatusTag from '@/components/status-tag/status-tag.vue'
 import EmptyState from '@/components/empty-state/empty-state.vue'
 import { 设备接口 } from '@/api/index.js'
+import { 解析路由参数 } from '@/utils/navigation.js'
 
 const 空设备详情 = {
 	表单字段列表: [],
@@ -133,21 +137,13 @@ const 基础信息字段列表 = computed(() => {
 	return 表单字段列表.value.filter((字段) => !基础信息隐藏字段.has(字段.名称))
 })
 const 设备参数展示列表 = computed(() => {
-	return 设备参数列表.value.filter((字段) => {
-		const 是否设备名称 = 字段.名称 === '名称' ||
-			(!/模[版板]名称/.test(字段.名称) && /(编号名称|设备名称|设备信息)$/.test(字段.名称))
-
-		return !是否设备名称
-	})
+	return 设备参数列表.value.filter((字段) => !是否设备名称字段(字段))
 })
 
 const 设备主信息 = computed(() => {
 	const 全部字段 = [...表单字段列表.value, ...设备参数列表.value]
 	const 类型字段 = 全部字段.find((字段) => 字段.名称 === '设备类型')
-	const 名称字段 = 全部字段.find((字段) => {
-		return 字段.名称 === '名称' ||
-			(!/模[版板]名称/.test(字段.名称) && /(编号名称|设备名称|设备信息)$/.test(字段.名称))
-	})
+	const 名称字段 = 全部字段.find(是否设备名称字段)
 	const 通讯字段 = 全部字段.find((字段) => 字段.名称 === '通讯状态')
 	const 类型 = 类型字段 ? 类型字段.数值 : 路由设备类型.value
 	const 名称 = 名称字段 ? 名称字段.数值 : ''
@@ -191,11 +187,18 @@ const 报警表格字段列表 = computed(() => {
 	return 字段名称列表
 })
 
+function 是否设备名称字段(字段) {
+	// 主信息取名与参数列表隐藏名称使用同一规则，设备模版名称仍正常展示。
+	return 字段.名称 === '名称' ||
+		(!/模[版板]名称/.test(字段.名称) && /(编号名称|设备名称|设备信息)$/.test(字段.名称))
+}
+
 function 初始化页面(参数 = {}) {
-	// 详情使用设备列表返回的数据库 ID；兼容旧版本曾使用的设备SN路由参数。
-	设备ID.value = 参数.设备ID || 参数.ID || 参数.设备SN || ''
-	路由设备SN.value = 参数.设备SN || ''
-	路由设备类型.value = 参数.设备类型 || ''
+	const 路由参数 = 解析路由参数(参数)
+	// 详情使用设备列表返回的数据库 ID；兼容旧版本曾使用的中文参数和设备SN。
+	路由设备SN.value = 路由参数.deviceSn || 路由参数.设备SN || ''
+	设备ID.value = 路由参数.deviceId || 路由参数.设备ID || 路由参数.ID || 路由设备SN.value
+	路由设备类型.value = 路由参数.deviceType || 路由参数.设备类型 || ''
 	设备详情.value = { ...空设备详情 }
 	报警数据.value = []
 	当前报警状态.value = '全部'
@@ -218,7 +221,6 @@ async function 加载设备详情() {
 			设备接口.sb读取({ ID: 当前设备ID }).catch(() => null),
 			设备接口.BJ设备日志({ 设备ID: 当前设备ID }).catch(() => null)
 		])
-		console.log('sb读取解析后数据', 详情结果)
 
 		if (!页面有效 || 当前请求序号 !== 页面请求序号 || 当前设备ID !== 设备ID.value) {
 			return
@@ -244,9 +246,13 @@ function 读取表格列样式(列数) {
 	}
 }
 
-function 读取报警表格宽度(列数) {
+function 读取表格宽度(列数, 数据列表 = []) {
+	// 无表头时按实际数据列数预留宽度，少列填满容器，多列在表格内横向滚动。
+	const 实际列数 = 数据列表.reduce((最大列数, 行) => Math.max(最大列数, 行.length), Number(列数) || 1)
+
 	return {
-		width: `${Math.max((Number(列数) || 1) * 220, 620)}rpx`
+		minWidth: '100%',
+		width: `${Math.max(实际列数 * 220, 620)}rpx`
 	}
 }
 
@@ -274,9 +280,14 @@ onUnload(() => {
 
 <style>
 .page {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
 	min-height: 100vh;
 	padding: 24rpx;
 	padding-bottom: 48rpx;
+	padding-bottom: calc(48rpx + constant(safe-area-inset-bottom));
+	padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 	background: #f5f7fa;
 }
 
@@ -329,6 +340,7 @@ onUnload(() => {
 
 .section__head {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 16rpx;
@@ -374,6 +386,7 @@ onUnload(() => {
 }
 
 .table {
+	box-sizing: border-box;
 	margin-top: 20rpx;
 	border-radius: 14rpx;
 	overflow: hidden;
@@ -400,6 +413,7 @@ onUnload(() => {
 }
 
 .table__row text {
+	box-sizing: border-box;
 	min-width: 0;
 	padding: 14rpx 12rpx;
 	font-size: 22rpx;
@@ -432,7 +446,10 @@ onUnload(() => {
 	color: #1677ff;
 }
 
-.alarm-table-scroll {
+.table-scroll {
+	box-sizing: border-box;
 	width: 100%;
+	max-width: 100%;
+	min-width: 0;
 }
 </style>
